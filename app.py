@@ -1,48 +1,24 @@
-from flask import Flask
-from flask import render_template
+#imports
+from flask import Flask, render_template, request
+from chatterbot import ChatBot
+from chatterbot.trainers import ChatterBotCorpusTrainer
 
+app = Flask(__name__,template_folder='template')
+#create chatbot
+chatbot = ChatBot("Chatterbot", storage_adapter="chatterbot.storage.SQLStorageAdapter")
+chatbot.set_trainer(ChatterBotCorpusTrainer)
+chatbot.train("chatterbot.corpus.english") #train the chatter bot for english
 
-app = Flask(__name__)
-
-
+#define app routes
 @app.route("/")
-def home():
-    content = 'Flask-Jinja-Test'
-    return render_template(
-        "hello.html",
-        title='Hello',
-        content=content
-    )
+def index():
+    return render_template("index.html")
 
+@app.route("/get")
+#function for the bot response
+def get_bot_response():
+    userText = request.args.get('msg')
+    return str(chatbot.get_response(userText))
 
-@app.route("/handled")
-def bad_route_handled():
-    try:
-        raise ArithmeticError('Hello')
-    except Exception:
-        pass
-    return render_template(
-        "hello.html",
-        title='Hello',
-        content='Flask-Jinja-Test'
-    )
-
-
-@app.route("/unhandled")
-def bad_route_unhandled():
-    raise ArithmeticError('Hello')
-    return render_template(
-        "hello.html",
-        title='Hello',
-        content='Flask-Jinja-Test'
-    )
-
-
-@app.route("/exit")
-def exit_app():
-    from flask import request
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        raise RuntimeError('No shutdown')
-    func()
-    return 'Done'
+if __name__ == "__main__":
+    app.run()
